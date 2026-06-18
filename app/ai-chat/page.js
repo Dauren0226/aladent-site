@@ -1,13 +1,270 @@
 "use client";
 
-import { useMemo, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import { BASE_PATH } from "../../lib/paths";
 
+const chatTranslations = {
+  ru: {
+    header: {
+      title: "AI-консультация",
+      subtitle: "Первичный опрос перед визитом",
+      home: "На главную",
+      admin: "CRM",
+    },
+
+    progress: "Шаг",
+    of: "из",
+
+    common: {
+      back: "Назад",
+      next: "Далее",
+      finish: "Сохранить заявку",
+      optional: "необязательно",
+    },
+
+    steps: [
+      {
+        key: "concern",
+        title: "Что вас беспокоит?",
+        subtitle: "Выберите основной повод обращения.",
+        type: "options",
+        options: [
+          "Болит зуб",
+          "Нужна консультация",
+          "Профессиональная чистка",
+          "Эстетика / реставрация",
+          "Имплантация",
+          "Ортодонтия",
+          "Другое",
+        ],
+      },
+      {
+        key: "urgency",
+        title: "Насколько срочно?",
+        subtitle: "Это поможет администратору правильно расставить приоритет.",
+        type: "options",
+        options: [
+          "Очень срочно",
+          "В ближайшие дни",
+          "На этой неделе",
+          "Плановый визит",
+        ],
+      },
+      {
+        key: "pain",
+        title: "Есть ли боль?",
+        subtitle: "Оцените состояние сейчас.",
+        type: "options",
+        options: [
+          "Нет боли",
+          "Легкий дискомфорт",
+          "Средняя боль",
+          "Сильная боль",
+          "Болит при жевании",
+          "Болит ночью",
+        ],
+      },
+      {
+        key: "preferredTime",
+        title: "Когда вам удобно прийти?",
+        subtitle: "Выберите предпочтительное время.",
+        type: "options",
+        options: [
+          "Утром",
+          "Днем",
+          "Вечером",
+          "В выходные",
+          "Любое время",
+        ],
+      },
+      {
+        key: "contacts",
+        title: "Как с вами связаться?",
+        subtitle: "Оставьте имя и телефон для администратора.",
+        type: "contacts",
+      },
+      {
+        key: "comment",
+        title: "Дополнительный комментарий",
+        subtitle: "Можете кратко описать ситуацию своими словами.",
+        type: "comment",
+      },
+    ],
+
+    fields: {
+      name: "Ваше имя",
+      phone: "Телефон",
+      comment: "Комментарий",
+    },
+
+    placeholders: {
+      name: "Например: Даурен",
+      phone: "+7 ...",
+      comment: "Например: зуб реагирует на холодное, хочу записаться вечером",
+    },
+
+    recommendation: {
+      urgentTitle: "Рекомендация",
+      urgentText:
+        "Похоже, лучше не откладывать визит. Администратор сможет быстрее сориентировать вас по ближайшему времени.",
+      normalTitle: "Рекомендация",
+      normalText:
+        "Ситуация выглядит подходящей для плановой консультации. Администратор уточнит детали и предложит удобное время.",
+    },
+
+    summary: {
+      title: "Заявка подготовлена",
+      text: "Мы сохранили информацию в локальную CRM. В реальном проекте эта заявка будет уходить администратору.",
+      newRequest: "Создать новую заявку",
+      goAdmin: "Открыть CRM",
+      home: "На главную",
+      saved: "Заявка сохранена",
+    },
+
+    requestLabels: {
+      concern: "Повод",
+      urgency: "Срочность",
+      pain: "Боль",
+      preferredTime: "Удобное время",
+      name: "Имя",
+      phone: "Телефон",
+      comment: "Комментарий",
+    },
+  },
+
+  kz: {
+    header: {
+      title: "AI-кеңес",
+      subtitle: "Қабылдау алдындағы бастапқы сауалнама",
+      home: "Басты бет",
+      admin: "CRM",
+    },
+
+    progress: "Қадам",
+    of: "ішінен",
+
+    common: {
+      back: "Артқа",
+      next: "Әрі қарай",
+      finish: "Өтінімді сақтау",
+      optional: "міндетті емес",
+    },
+
+    steps: [
+      {
+        key: "concern",
+        title: "Сізді не мазалайды?",
+        subtitle: "Қаралудың негізгі себебін таңдаңыз.",
+        type: "options",
+        options: [
+          "Тіс ауырады",
+          "Кеңес керек",
+          "Кәсіби тазалау",
+          "Эстетика / реставрация",
+          "Имплантация",
+          "Ортодонтия",
+          "Басқа",
+        ],
+      },
+      {
+        key: "urgency",
+        title: "Қаншалықты шұғыл?",
+        subtitle: "Бұл әкімшіге өтінімді дұрыс басымдықпен қарауға көмектеседі.",
+        type: "options",
+        options: [
+          "Өте шұғыл",
+          "Жақын күндері",
+          "Осы аптада",
+          "Жоспарлы қабылдау",
+        ],
+      },
+      {
+        key: "pain",
+        title: "Ауырсыну бар ма?",
+        subtitle: "Қазіргі жағдайыңызды бағалаңыз.",
+        type: "options",
+        options: [
+          "Ауырсыну жоқ",
+          "Жеңіл жайсыздық",
+          "Орташа ауырсыну",
+          "Қатты ауырсыну",
+          "Шайнағанда ауырады",
+          "Түнде ауырады",
+        ],
+      },
+      {
+        key: "preferredTime",
+        title: "Қай уақытта келу ыңғайлы?",
+        subtitle: "Өзіңізге ыңғайлы уақытты таңдаңыз.",
+        type: "options",
+        options: [
+          "Таңертең",
+          "Күндіз",
+          "Кешке",
+          "Демалыс күндері",
+          "Кез келген уақыт",
+        ],
+      },
+      {
+        key: "contacts",
+        title: "Сізбен қалай байланысайық?",
+        subtitle: "Әкімші үшін атыңыз бен телефоныңызды қалдырыңыз.",
+        type: "contacts",
+      },
+      {
+        key: "comment",
+        title: "Қосымша пікір",
+        subtitle: "Жағдайды қысқаша өз сөзіңізбен сипаттай аласыз.",
+        type: "comment",
+      },
+    ],
+
+    fields: {
+      name: "Атыңыз",
+      phone: "Телефон",
+      comment: "Пікір",
+    },
+
+    placeholders: {
+      name: "Мысалы: Дәурен",
+      phone: "+7 ...",
+      comment: "Мысалы: тіс суыққа сезімтал, кешке жазылғым келеді",
+    },
+
+    recommendation: {
+      urgentTitle: "Ұсыныс",
+      urgentText:
+        "Қабылдауды кейінге қалдырмаған дұрыс сияқты. Әкімші сізге жақын уақыттарды тезірек ұсына алады.",
+      normalTitle: "Ұсыныс",
+      normalText:
+        "Жағдай жоспарлы кеңеске сай келеді. Әкімші мәліметтерді нақтылап, ыңғайлы уақыт ұсынады.",
+    },
+
+    summary: {
+      title: "Өтінім дайындалды",
+      text: "Ақпарат локалды CRM жүйесіне сақталды. Нақты жобада бұл өтінім әкімшіге жіберіледі.",
+      newRequest: "Жаңа өтінім жасау",
+      goAdmin: "CRM ашу",
+      home: "Басты бет",
+      saved: "Өтінім сақталды",
+    },
+
+    requestLabels: {
+      concern: "Себеп",
+      urgency: "Шұғылдық",
+      pain: "Ауырсыну",
+      preferredTime: "Ыңғайлы уақыт",
+      name: "Аты",
+      phone: "Телефон",
+      comment: "Пікір",
+    },
+  },
+};
+
 export default function AiChatPage() {
+  const [language, setLanguage] = useState("ru");
   const [step, setStep] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [savedRequestId, setSavedRequestId] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   const [form, setForm] = useState({
     concern: "",
@@ -19,98 +276,99 @@ export default function AiChatPage() {
     comment: "",
   });
 
-  const updateForm = (key, value) => {
-    setForm((prev) => ({
-      ...prev,
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem("aladent_language");
+
+    if (savedLanguage === "ru" || savedLanguage === "kz") {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  const t = chatTranslations[language];
+  const currentStep = t.steps[step];
+
+  const isUrgent = useMemo(() => {
+    const urgentValues = [
+      "Очень срочно",
+      "Сильная боль",
+      "Болит ночью",
+      "Өте шұғыл",
+      "Қатты ауырсыну",
+      "Түнде ауырады",
+    ];
+
+    return urgentValues.includes(form.urgency) || urgentValues.includes(form.pain);
+  }, [form.urgency, form.pain]);
+
+  const recommendation = isUrgent
+    ? {
+        title: t.recommendation.urgentTitle,
+        text: t.recommendation.urgentText,
+      }
+    : {
+        title: t.recommendation.normalTitle,
+        text: t.recommendation.normalText,
+      };
+
+  const canGoNext = useMemo(() => {
+    if (currentStep.type === "options") {
+      return Boolean(form[currentStep.key]);
+    }
+
+    if (currentStep.type === "contacts") {
+      return Boolean(form.name.trim()) && Boolean(form.phone.trim());
+    }
+
+    return true;
+  }, [currentStep, form]);
+
+  const updateField = (key, value) => {
+    setForm((previous) => ({
+      ...previous,
       [key]: value,
     }));
   };
 
-  const recommendation = useMemo(() => {
-    if (form.pain === "Сильная" || form.urgency === "Сегодня / завтра") {
-      return "Срочная заявка. Желательно связаться с пациентом как можно быстрее.";
-    }
+  const saveRequest = () => {
+    const previousRequests = JSON.parse(
+      localStorage.getItem("aladent_requests") || "[]"
+    );
 
-    if (form.concern === "Болит зуб" || form.concern === "Лечение кариеса") {
-      return "Передать администратору для записи на консультацию/осмотр.";
-    }
-
-    return "Плановая заявка. Можно предложить ближайшие удобные слоты.";
-  }, [form]);
-
-  const summaryText = `
-Новая заявка ALADENT
-
-Имя: ${form.name || "Не указано"}
-Телефон: ${form.phone || "Не указано"}
-
-Причина обращения: ${form.concern || "Не указано"}
-Срочность: ${form.urgency || "Не указано"}
-Боль: ${form.pain || "Не указано"}
-Удобное время: ${form.preferredTime || "Не указано"}
-
-Комментарий пациента:
-${form.comment || "Нет комментария"}
-
-Рекомендация системы:
-${recommendation}
-`;
-
-  const saveRequestToCRM = () => {
-    const newRequest = {
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      status: "Новая",
-      name: form.name,
-      phone: form.phone,
+    const request = {
+      id:
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : String(Date.now()),
+      createdAt: new Date().toLocaleString(),
+      status: "new",
+      language,
       concern: form.concern,
       urgency: form.urgency,
       pain: form.pain,
       preferredTime: form.preferredTime,
+      name: form.name,
+      phone: form.phone,
       comment: form.comment,
-      recommendation,
+      recommendation: recommendation.text,
     };
 
-    const existingRequests = JSON.parse(
-      localStorage.getItem("aladent_requests") || "[]"
+    localStorage.setItem(
+      "aladent_requests",
+      JSON.stringify([request, ...previousRequests])
     );
 
-    const updatedRequests = [newRequest, ...existingRequests];
-
-    localStorage.setItem("aladent_requests", JSON.stringify(updatedRequests));
-
-    setSavedRequestId(newRequest.id);
-  };
-
-  const copySummary = async () => {
-    await navigator.clipboard.writeText(summaryText);
-    setCopied(true);
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
-  };
-
-  const canGoNext = () => {
-    if (step === 0) return form.concern;
-    if (step === 1) return form.urgency;
-    if (step === 2) return form.pain;
-    if (step === 3) return form.preferredTime;
-    if (step === 4) return form.name.trim().length > 1;
-    if (step === 5) return form.phone.trim().length > 5;
-    return true;
+    setIsSaved(true);
   };
 
   const nextStep = () => {
-    if (step === 5) {
-      saveRequestToCRM();
-      setStep(6);
+    if (!canGoNext) return;
+
+    if (step < t.steps.length - 1) {
+      setStep(step + 1);
       return;
     }
 
-    if (step < 6) {
-      setStep(step + 1);
-    }
+    saveRequest();
   };
 
   const previousStep = () => {
@@ -119,276 +377,335 @@ ${recommendation}
     }
   };
 
-  const optionButton = (key, value) => (
+  const resetForm = () => {
+    setStep(0);
+    setIsSaved(false);
+    setForm({
+      concern: "",
+      urgency: "",
+      pain: "",
+      preferredTime: "",
+      name: "",
+      phone: "",
+      comment: "",
+    });
+  };
+
+  const changeLanguage = (nextLanguage) => {
+    setLanguage(nextLanguage);
+    localStorage.setItem("aladent_language", nextLanguage);
+  };
+
+  const optionButton = (value) => (
     <button
-      onClick={() => updateForm(key, value)}
-      className={`w-full rounded-2xl border px-5 py-4 text-left transition ${
-        form[key] === value
+      key={value}
+      onClick={() => updateField(currentStep.key, value)}
+      className={`rounded-2xl border px-5 py-4 text-left transition ${
+        form[currentStep.key] === value
           ? "border-[#151515] bg-[#151515] text-white"
-          : "border-neutral-200 bg-white hover:bg-[#F7F6F3]"
+          : "border-neutral-200 bg-white text-[#2D2D2D] hover:border-neutral-400"
       }`}
     >
       {value}
     </button>
   );
 
-  return (
-    <main className="min-h-screen bg-[#F7F6F3] px-5 py-8 text-[#2D2D2D] sm:px-8">
-      <div className="mx-auto flex max-w-4xl items-center justify-between">
-        <a href={`${BASE_PATH}/`}>
-          <img src={`${BASE_PATH}/logo.png`} alt="ALADENT" className="h-14 w-auto sm:h-16" />
-        </a>
-
-        <div className="flex gap-2">
-          <a
-            href="/admin"
-            className="rounded-full border border-neutral-300 px-5 py-3 text-sm"
-          >
-            CRM
-          </a>
-
-          <a
-            href={`${BASE_PATH}/`}
-            className="rounded-full border border-neutral-300 px-5 py-3 text-sm"
-          >
-            На главную
-          </a>
-        </div>
-      </div>
-
-      <section className="mx-auto mt-10 max-w-4xl rounded-[2rem] bg-white p-6 shadow-sm sm:mt-16 sm:p-10">
-        <div className="mb-8">
-          <p className="mb-4 text-xs uppercase tracking-[0.35em] text-neutral-500 sm:text-sm">
-            AI-опрос
-          </p>
-
-          <h1 className="mb-4 text-3xl font-light sm:text-5xl">
-            Расскажите, что вас беспокоит
-          </h1>
-
-          <p className="leading-7 text-neutral-600">
-            Ответьте на несколько вопросов. Мы подготовим заявку для
-            администратора и врача.
-          </p>
-        </div>
-
-        {step < 6 && (
-          <div className="mb-8">
-            <div className="mb-3 flex justify-between text-sm text-neutral-500">
-              <span>Шаг {step + 1} из 6</span>
-              <span>{Math.round(((step + 1) / 6) * 100)}%</span>
-            </div>
-
-            <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
-              <div
-                className="h-full rounded-full bg-[#151515] transition-all"
-                style={{ width: `${((step + 1) / 6) * 100}%` }}
+  if (isSaved) {
+    return (
+      <main className="min-h-screen bg-[#F7F6F3] px-5 py-8 text-[#2D2D2D] sm:px-8">
+        <div className="mx-auto max-w-4xl">
+          <header className="mb-12 flex items-center justify-between gap-4">
+            <a href={`${BASE_PATH}/`}>
+              <img
+                src={`${BASE_PATH}/logo.png`}
+                alt="ALADENT"
+                className="h-14 w-auto sm:h-20"
               />
-            </div>
-          </div>
-        )}
+            </a>
 
-        {step === 0 && (
-          <div>
-            <h2 className="mb-6 text-2xl font-light">Что вас беспокоит?</h2>
-
-            <div className="space-y-3">
-              {optionButton("concern", "Болит зуб")}
-              {optionButton("concern", "Нужна профессиональная чистка")}
-              {optionButton("concern", "Лечение кариеса")}
-              {optionButton("concern", "Консультация по имплантации")}
-              {optionButton("concern", "Ортодонтия / брекеты")}
-              {optionButton("concern", "Эстетика улыбки")}
-              {optionButton("concern", "Другое")}
-            </div>
-          </div>
-        )}
-
-        {step === 1 && (
-          <div>
-            <h2 className="mb-6 text-2xl font-light">Насколько срочно?</h2>
-
-            <div className="space-y-3">
-              {optionButton("urgency", "Сегодня / завтра")}
-              {optionButton("urgency", "В течение недели")}
-              {optionButton("urgency", "Планово")}
-              {optionButton("urgency", "Пока хочу только консультацию")}
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div>
-            <h2 className="mb-6 text-2xl font-light">Есть ли боль?</h2>
-
-            <div className="space-y-3">
-              {optionButton("pain", "Нет боли")}
-              {optionButton("pain", "Слабая")}
-              {optionButton("pain", "Средняя")}
-              {optionButton("pain", "Сильная")}
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div>
-            <h2 className="mb-6 text-2xl font-light">
-              Когда вам удобно прийти?
-            </h2>
-
-            <div className="space-y-3">
-              {optionButton("preferredTime", "Утром")}
-              {optionButton("preferredTime", "Днем")}
-              {optionButton("preferredTime", "Вечером")}
-              {optionButton("preferredTime", "В любое время")}
-            </div>
-          </div>
-        )}
-
-        {step === 4 && (
-          <div>
-            <h2 className="mb-6 text-2xl font-light">Как вас зовут?</h2>
-
-            <input
-              value={form.name}
-              onChange={(event) => updateForm("name", event.target.value)}
-              className="w-full rounded-2xl border border-neutral-200 bg-[#F7F6F3] px-5 py-4 outline-none"
-              placeholder="Введите имя"
-            />
-          </div>
-        )}
-
-        {step === 5 && (
-          <div>
-            <h2 className="mb-6 text-2xl font-light">Ваш номер телефона</h2>
-
-            <input
-              value={form.phone}
-              onChange={(event) => updateForm("phone", event.target.value)}
-              className="w-full rounded-2xl border border-neutral-200 bg-[#F7F6F3] px-5 py-4 outline-none"
-              placeholder="+7 ..."
-            />
-
-            <textarea
-              value={form.comment}
-              onChange={(event) => updateForm("comment", event.target.value)}
-              className="mt-4 h-32 w-full rounded-2xl border border-neutral-200 bg-[#F7F6F3] px-5 py-4 outline-none"
-              placeholder="Дополнительный комментарий, если нужно"
-            />
-          </div>
-        )}
-
-        {step === 6 && (
-          <div>
-            <p className="mb-4 text-xs uppercase tracking-[0.35em] text-neutral-500 sm:text-sm">
-              Заявка сохранена
-            </p>
-
-            <h2 className="mb-4 text-3xl font-light sm:text-4xl">
-              Спасибо, {form.name}
-            </h2>
-
-            <p className="mb-8 leading-7 text-neutral-600">
-              Заявка сохранена в локальную CRM. Администратор сможет увидеть ее
-              на странице управления заявками.
-            </p>
-
-            <div className="mb-8 rounded-2xl border border-green-200 bg-green-50 p-5 text-green-900">
-              ID заявки: {savedRequestId}
-            </div>
-
-            <div className="space-y-4 rounded-[2rem] bg-[#F7F6F3] p-6">
-              <div className="flex flex-col gap-1 border-b border-neutral-200 pb-4 sm:flex-row sm:justify-between">
-                <span className="text-neutral-500">Причина обращения</span>
-                <span className="font-medium">{form.concern}</span>
-              </div>
-
-              <div className="flex flex-col gap-1 border-b border-neutral-200 pb-4 sm:flex-row sm:justify-between">
-                <span className="text-neutral-500">Срочность</span>
-                <span className="font-medium">{form.urgency}</span>
-              </div>
-
-              <div className="flex flex-col gap-1 border-b border-neutral-200 pb-4 sm:flex-row sm:justify-between">
-                <span className="text-neutral-500">Боль</span>
-                <span className="font-medium">{form.pain}</span>
-              </div>
-
-              <div className="flex flex-col gap-1 border-b border-neutral-200 pb-4 sm:flex-row sm:justify-between">
-                <span className="text-neutral-500">Удобное время</span>
-                <span className="font-medium">{form.preferredTime}</span>
-              </div>
-
-              <div className="flex flex-col gap-1 border-b border-neutral-200 pb-4 sm:flex-row sm:justify-between">
-                <span className="text-neutral-500">Телефон</span>
-                <span className="font-medium">{form.phone}</span>
-              </div>
-
-              {form.comment && (
-                <div className="border-b border-neutral-200 pb-4">
-                  <span className="text-neutral-500">Комментарий</span>
-                  <p className="mt-2 leading-7">{form.comment}</p>
-                </div>
-              )}
-
-              <div>
-                <span className="text-neutral-500">Рекомендация системы</span>
-                <p className="mt-2 font-medium leading-7">{recommendation}</p>
-              </div>
-            </div>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="/admin"
-                className="rounded-full bg-[#151515] px-8 py-4 text-center text-white"
-              >
-                Открыть CRM
-              </a>
-
+            <div className="flex items-center gap-3 text-sm">
               <button
-                onClick={copySummary}
-                className="rounded-full border border-neutral-300 px-8 py-4"
+                onClick={() => changeLanguage("ru")}
+                className={language === "ru" ? "font-medium" : "text-neutral-400"}
               >
-                {copied ? "Скопировано" : "Скопировать заявку"}
+                RU
+              </button>
+              <span className="text-neutral-400">/</span>
+              <button
+                onClick={() => changeLanguage("kz")}
+                className={language === "kz" ? "font-medium" : "text-neutral-400"}
+              >
+                KZ
+              </button>
+            </div>
+          </header>
+
+          <section className="rounded-[2rem] bg-white p-7 shadow-sm sm:p-10 md:p-14">
+            <p className="mb-4 text-sm uppercase tracking-[0.35em] text-neutral-400">
+              {t.summary.saved}
+            </p>
+
+            <h1 className="mb-6 text-4xl font-light sm:text-5xl">
+              {t.summary.title}
+            </h1>
+
+            <p className="mb-10 max-w-2xl leading-8 text-neutral-600">
+              {t.summary.text}
+            </p>
+
+            <div className="mb-10 rounded-[2rem] bg-[#F7F6F3] p-6">
+              <h2 className="mb-4 text-xl font-medium">{recommendation.title}</h2>
+              <p className="leading-7 text-neutral-600">{recommendation.text}</p>
+            </div>
+
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              <SummaryRow label={t.requestLabels.concern} value={form.concern} />
+              <SummaryRow label={t.requestLabels.urgency} value={form.urgency} />
+              <SummaryRow label={t.requestLabels.pain} value={form.pain} />
+              <SummaryRow
+                label={t.requestLabels.preferredTime}
+                value={form.preferredTime}
+              />
+              <SummaryRow label={t.requestLabels.name} value={form.name} />
+              <SummaryRow label={t.requestLabels.phone} value={form.phone} />
+            </div>
+
+            {form.comment && (
+              <div className="mt-3 rounded-2xl bg-[#F7F6F3] p-5">
+                <p className="mb-1 text-xs uppercase tracking-[0.25em] text-neutral-400">
+                  {t.requestLabels.comment}
+                </p>
+                <p>{form.comment}</p>
+              </div>
+            )}
+
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={resetForm}
+                className="rounded-full border border-neutral-300 px-7 py-4"
+              >
+                {t.summary.newRequest}
               </button>
 
               <a
-                href={`${BASE_PATH}/`}
-                className="rounded-full border border-neutral-300 px-8 py-4 text-center"
+                href={`${BASE_PATH}/admin/`}
+                className="rounded-full bg-[#151515] px-7 py-4 text-center text-white"
               >
-                На главную
+                {t.summary.goAdmin}
+              </a>
+
+              <a
+                href={`${BASE_PATH}/`}
+                className="rounded-full border border-neutral-300 px-7 py-4 text-center"
+              >
+                {t.summary.home}
               </a>
             </div>
-          </div>
-        )}
+          </section>
+        </div>
+      </main>
+    );
+  }
 
-        {step < 6 && (
-          <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-            <button
-              onClick={previousStep}
-              disabled={step === 0}
-              className={`rounded-full border px-8 py-4 ${
-                step === 0
-                  ? "cursor-not-allowed border-neutral-200 text-neutral-300"
-                  : "border-neutral-300"
-              }`}
-            >
-              Назад
-            </button>
+  return (
+    <main className="min-h-screen bg-[#F7F6F3] px-5 py-8 text-[#2D2D2D] sm:px-8">
+      <div className="mx-auto max-w-5xl">
+        <header className="mb-10 flex flex-wrap items-center justify-between gap-4">
+          <a href={`${BASE_PATH}/`}>
+            <img
+              src={`${BASE_PATH}/logo.png`}
+              alt="ALADENT"
+              className="h-14 w-auto sm:h-20"
+            />
+          </a>
 
-            <button
-              onClick={nextStep}
-              disabled={!canGoNext()}
-              className={`rounded-full px-8 py-4 text-white ${
-                canGoNext()
-                  ? "bg-[#151515]"
-                  : "cursor-not-allowed bg-neutral-300"
-              }`}
+          <div className="flex items-center gap-5">
+            <div className="flex items-center gap-2 text-sm">
+              <button
+                onClick={() => changeLanguage("ru")}
+                className={language === "ru" ? "font-medium" : "text-neutral-400"}
+              >
+                RU
+              </button>
+
+              <span className="text-neutral-400">/</span>
+
+              <button
+                onClick={() => changeLanguage("kz")}
+                className={language === "kz" ? "font-medium" : "text-neutral-400"}
+              >
+                KZ
+              </button>
+            </div>
+
+            <a
+              href={`${BASE_PATH}/admin/`}
+              className="rounded-full border border-neutral-300 px-5 py-3 text-sm"
             >
-              {step === 5 ? "Сохранить заявку" : "Далее"}
-            </button>
+              {t.header.admin}
+            </a>
+
+            <a
+              href={`${BASE_PATH}/`}
+              className="rounded-full bg-[#151515] px-5 py-3 text-sm text-white"
+            >
+              {t.header.home}
+            </a>
           </div>
-        )}
-      </section>
+        </header>
+
+        <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-[2rem] bg-white p-7 shadow-sm sm:p-10 md:p-12">
+            <p className="mb-4 text-sm uppercase tracking-[0.35em] text-neutral-400">
+              {t.header.title}
+            </p>
+
+            <h1 className="mb-3 text-3xl font-light sm:text-4xl md:text-5xl">
+              {currentStep.title}
+            </h1>
+
+            <p className="mb-8 leading-8 text-neutral-600">
+              {currentStep.subtitle}
+            </p>
+
+            <div className="mb-8">
+              <div className="mb-2 flex justify-between text-sm text-neutral-500">
+                <span>
+                  {t.progress} {step + 1} {t.of} {t.steps.length}
+                </span>
+                <span>{Math.round(((step + 1) / t.steps.length) * 100)}%</span>
+              </div>
+
+              <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
+                <div
+                  className="h-full rounded-full bg-[#151515] transition-all"
+                  style={{
+                    width: `${((step + 1) / t.steps.length) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {currentStep.type === "options" && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {currentStep.options.map(optionButton)}
+              </div>
+            )}
+
+            {currentStep.type === "contacts" && (
+              <div className="grid gap-4">
+                <label className="block">
+                  <span className="mb-2 block text-sm text-neutral-500">
+                    {t.fields.name}
+                  </span>
+                  <input
+                    value={form.name}
+                    onChange={(event) => updateField("name", event.target.value)}
+                    placeholder={t.placeholders.name}
+                    className="w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 outline-none focus:border-[#151515]"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm text-neutral-500">
+                    {t.fields.phone}
+                  </span>
+                  <input
+                    value={form.phone}
+                    onChange={(event) => updateField("phone", event.target.value)}
+                    placeholder={t.placeholders.phone}
+                    className="w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 outline-none focus:border-[#151515]"
+                  />
+                </label>
+              </div>
+            )}
+
+            {currentStep.type === "comment" && (
+              <label className="block">
+                <span className="mb-2 block text-sm text-neutral-500">
+                  {t.fields.comment} ({t.common.optional})
+                </span>
+
+                <textarea
+                  value={form.comment}
+                  onChange={(event) => updateField("comment", event.target.value)}
+                  placeholder={t.placeholders.comment}
+                  rows={5}
+                  className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-5 py-4 outline-none focus:border-[#151515]"
+                />
+              </label>
+            )}
+
+            <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+              <button
+                onClick={previousStep}
+                disabled={step === 0}
+                className="rounded-full border border-neutral-300 px-7 py-4 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                {t.common.back}
+              </button>
+
+              <button
+                onClick={nextStep}
+                disabled={!canGoNext}
+                className="rounded-full bg-[#151515] px-7 py-4 text-white disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                {step === t.steps.length - 1
+                  ? t.common.finish
+                  : t.common.next}
+              </button>
+            </div>
+          </div>
+
+          <aside className="rounded-[2rem] bg-[#151515] p-7 text-white shadow-sm sm:p-8">
+            <p className="mb-4 text-sm uppercase tracking-[0.35em] text-neutral-400">
+              {recommendation.title}
+            </p>
+
+            <p className="mb-8 leading-8 text-neutral-300">
+              {recommendation.text}
+            </p>
+
+            <div className="space-y-3 text-sm">
+              <PreviewRow label={t.requestLabels.concern} value={form.concern} />
+              <PreviewRow label={t.requestLabels.urgency} value={form.urgency} />
+              <PreviewRow label={t.requestLabels.pain} value={form.pain} />
+              <PreviewRow
+                label={t.requestLabels.preferredTime}
+                value={form.preferredTime}
+              />
+              <PreviewRow label={t.requestLabels.name} value={form.name} />
+              <PreviewRow label={t.requestLabels.phone} value={form.phone} />
+            </div>
+          </aside>
+        </section>
+      </div>
     </main>
+  );
+}
+
+function PreviewRow({ label, value }) {
+  if (!value) return null;
+
+  return (
+    <div className="rounded-2xl bg-white/10 p-4">
+      <p className="mb-1 text-xs uppercase tracking-[0.25em] text-neutral-400">
+        {label}
+      </p>
+      <p>{value}</p>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }) {
+  if (!value) return null;
+
+  return (
+    <div className="rounded-2xl bg-[#F7F6F3] p-5">
+      <p className="mb-1 text-xs uppercase tracking-[0.25em] text-neutral-400">
+        {label}
+      </p>
+      <p>{value}</p>
+    </div>
   );
 }
