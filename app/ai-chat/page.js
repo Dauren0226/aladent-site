@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+import { BASE_PATH } from "../../lib/paths";
 
 export default function AiChatPage() {
   const [step, setStep] = useState(0);
