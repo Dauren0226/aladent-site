@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BASE_PATH } from "../../lib/paths";
+const CLINIC_WHATSAPP_PHONE = "77051462776";
 
 const chatTranslations = {
   ru: {
@@ -114,7 +115,8 @@ const chatTranslations = {
 
     summary: {
       title: "Заявка подготовлена",
-      text: "Мы сохранили информацию в локальную CRM. В реальном проекте эта заявка будет уходить администратору.",
+      text: "Теперь отправьте заявку в WhatsApp клиники. Мы подготовили сообщение автоматически — вам останется только нажать отправить.",
+      sendWhatsApp: "Отправить в WhatsApp",
       newRequest: "Создать новую заявку",
       goAdmin: "Открыть CRM",
       home: "На главную",
@@ -242,7 +244,8 @@ const chatTranslations = {
 
     summary: {
       title: "Өтінім дайындалды",
-      text: "Ақпарат локалды CRM жүйесіне сақталды. Нақты жобада бұл өтінім әкімшіге жіберіледі.",
+      text: "Енді өтінімді клиниканың WhatsApp нөміріне жіберіңіз. Хабарлама автоматты түрде дайындалды — тек жіберу батырмасын басу керек.",
+      sendWhatsApp: "WhatsApp арқылы жіберу",
       newRequest: "Жаңа өтінім жасау",
       goAdmin: "CRM ашу",
       home: "Басты бет",
@@ -260,6 +263,38 @@ const chatTranslations = {
     },
   },
 };
+
+function buildClinicWhatsAppText(form, recommendation, language) {
+  if (language === "kz") {
+    return `Сәлеметсіз бе! ALADENT клиникасына жазылғым келеді.
+
+Аты: ${form.name || "-"}
+Телефон: ${form.phone || "-"}
+
+Себеп: ${form.concern || "-"}
+Шұғылдық: ${form.urgency || "-"}
+Ауырсыну: ${form.pain || "-"}
+Ыңғайлы уақыт: ${form.preferredTime || "-"}
+Пікір: ${form.comment || "-"}
+
+AI ұсынысы:
+${recommendation.text || "-"}`;
+  }
+
+  return `Здравствуйте! Хочу записаться в ALADENT.
+
+Имя: ${form.name || "-"}
+Телефон: ${form.phone || "-"}
+
+Повод: ${form.concern || "-"}
+Срочность: ${form.urgency || "-"}
+Боль: ${form.pain || "-"}
+Удобное время: ${form.preferredTime || "-"}
+Комментарий: ${form.comment || "-"}
+
+AI-рекомендация:
+${recommendation.text || "-"}`;
+}
 
 export default function AiChatPage() {
   const [language, setLanguage] = useState("ru");
@@ -310,6 +345,9 @@ export default function AiChatPage() {
         text: t.recommendation.normalText,
       };
 
+      const clinicWhatsAppUrl = `https://wa.me/${CLINIC_WHATSAPP_PHONE}?text=${encodeURIComponent(
+        buildClinicWhatsAppText(form, recommendation, language)
+      )}`;
   const canGoNext = useMemo(() => {
     if (currentStep.type === "options") {
       return Boolean(form[currentStep.key]);
@@ -480,6 +518,15 @@ export default function AiChatPage() {
             )}
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              <a
+                href={clinicWhatsAppUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full bg-green-600 px-7 py-4 text-center text-white"
+              >
+                {t.summary.sendWhatsApp}
+              </a>
+
               <button
                 onClick={resetForm}
                 className="rounded-full border border-neutral-300 px-7 py-4"
