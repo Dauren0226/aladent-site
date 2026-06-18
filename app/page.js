@@ -1,3 +1,4 @@
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 export default function Home() {
 
@@ -101,7 +102,7 @@ export default function Home() {
           </a>
 
           <a
-            href="/consultation"
+            href={`${BASE_PATH}/consultation/`}
             className="rounded-full border border-neutral-300 px-8 py-4 text-center sm:px-9 sm:py-5"
           >
             AI-консультация
@@ -220,7 +221,7 @@ export default function Home() {
             </p>
 
             <a
-              href="/consultation"
+              href={`${BASE_PATH}/consultation/`}
               className="inline-flex w-full items-center justify-center rounded-full bg-white px-8 py-5 text-center text-lg text-[#151515] sm:w-auto sm:px-12 sm:py-6"
             >
               Начать консультацию
@@ -293,7 +294,7 @@ export default function Home() {
             <a href="#services">Услуги</a>
             <a href="#prices">Цены</a>
             <a href="#contacts">Контакты</a>
-            <a href="/consultation">AI-консультация</a>
+            <a href={`${BASE_PATH}/consultation/`}>AI-консультация</a>
           </div>
         </div>
       </footer>
