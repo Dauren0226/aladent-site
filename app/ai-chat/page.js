@@ -2,28 +2,71 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BASE_PATH } from "../../lib/paths";
+
 const CLINIC_WHATSAPP_PHONE = "77051462776";
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7AnI0c1RPJtVww_4rWC4i0WBsQAsf0OmwnNkpPKne7A17ATItt_wkKfjlINd9CYWKMA/exec";
+const REQUEST_COOLDOWN_MS = 2 * 60 * 1000;
+
+async function sendRequestToGoogleSheets(request) {
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("ВСТАВЬ")) return;
+
+  await fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8",
+    },
+    body: JSON.stringify(request),
+  });
+}
+
+function buildClinicWhatsAppText(form, recommendation, language) {
+  if (language === "kz") {
+    return `Сәлеметсіз бе! ALADENT клиникасына жазылғым келеді.
+
+Аты: ${form.name || "-"}
+Телефон: ${form.phone || "-"}
+
+Себеп: ${form.concern || "-"}
+Шұғылдық: ${form.urgency || "-"}
+Ауырсыну: ${form.pain || "-"}
+Ыңғайлы уақыт: ${form.preferredTime || "-"}
+Пікір: ${form.comment || "-"}
+
+AI ұсынысы:
+${recommendation.text || "-"}`;
+  }
+
+  return `Здравствуйте! Хочу записаться в ALADENT.
+
+Имя: ${form.name || "-"}
+Телефон: ${form.phone || "-"}
+
+Повод: ${form.concern || "-"}
+Срочность: ${form.urgency || "-"}
+Боль: ${form.pain || "-"}
+Удобное время: ${form.preferredTime || "-"}
+Комментарий: ${form.comment || "-"}
+
+AI-рекомендация:
+${recommendation.text || "-"}`;
+}
 
 const chatTranslations = {
   ru: {
     header: {
       title: "AI-консультация",
-      subtitle: "Первичный опрос перед визитом",
       home: "На главную",
       admin: "CRM",
     },
-
     progress: "Шаг",
     of: "из",
-
     common: {
       back: "Назад",
       next: "Далее",
       finish: "Сохранить заявку",
       optional: "необязательно",
     },
-
     steps: [
       {
         key: "concern",
@@ -71,13 +114,7 @@ const chatTranslations = {
         title: "Когда вам удобно прийти?",
         subtitle: "Выберите предпочтительное время.",
         type: "options",
-        options: [
-          "Утром",
-          "Днем",
-          "Вечером",
-          "В выходные",
-          "Любое время",
-        ],
+        options: ["Утром", "Днем", "Вечером", "В выходные", "Любое время"],
       },
       {
         key: "contacts",
@@ -92,19 +129,16 @@ const chatTranslations = {
         type: "comment",
       },
     ],
-
     fields: {
       name: "Ваше имя",
       phone: "Телефон",
       comment: "Комментарий",
     },
-
     placeholders: {
       name: "Например: Даурен",
       phone: "+7 ...",
       comment: "Например: зуб реагирует на холодное, хочу записаться вечером",
     },
-
     recommendation: {
       urgentTitle: "Рекомендация",
       urgentText:
@@ -113,7 +147,6 @@ const chatTranslations = {
       normalText:
         "Ситуация выглядит подходящей для плановой консультации. Администратор уточнит детали и предложит удобное время.",
     },
-
     summary: {
       title: "Заявка подготовлена",
       text: "Теперь отправьте заявку в WhatsApp клиники. Мы подготовили сообщение автоматически — вам останется только нажать отправить.",
@@ -123,7 +156,14 @@ const chatTranslations = {
       home: "На главную",
       saved: "Заявка сохранена",
     },
-
+    crmStatus: {
+      sending: "Заявка отправляется в CRM...",
+      sent: "Заявка отправлена в Google Sheets CRM.",
+      error:
+        "Не получилось отправить заявку в CRM. WhatsApp-кнопка ниже всё равно работает.",
+      cooldown:
+        "Заявка уже была отправлена недавно. Если нужно срочно связаться с клиникой, используйте кнопку WhatsApp ниже.",
+    },
     requestLabels: {
       concern: "Повод",
       urgency: "Срочность",
@@ -138,21 +178,17 @@ const chatTranslations = {
   kz: {
     header: {
       title: "AI-кеңес",
-      subtitle: "Қабылдау алдындағы бастапқы сауалнама",
       home: "Басты бет",
       admin: "CRM",
     },
-
     progress: "Қадам",
     of: "ішінен",
-
     common: {
       back: "Артқа",
       next: "Әрі қарай",
       finish: "Өтінімді сақтау",
       optional: "міндетті емес",
     },
-
     steps: [
       {
         key: "concern",
@@ -174,12 +210,7 @@ const chatTranslations = {
         title: "Қаншалықты шұғыл?",
         subtitle: "Бұл әкімшіге өтінімді дұрыс басымдықпен қарауға көмектеседі.",
         type: "options",
-        options: [
-          "Өте шұғыл",
-          "Жақын күндері",
-          "Осы аптада",
-          "Жоспарлы қабылдау",
-        ],
+        options: ["Өте шұғыл", "Жақын күндері", "Осы аптада", "Жоспарлы қабылдау"],
       },
       {
         key: "pain",
@@ -200,13 +231,7 @@ const chatTranslations = {
         title: "Қай уақытта келу ыңғайлы?",
         subtitle: "Өзіңізге ыңғайлы уақытты таңдаңыз.",
         type: "options",
-        options: [
-          "Таңертең",
-          "Күндіз",
-          "Кешке",
-          "Демалыс күндері",
-          "Кез келген уақыт",
-        ],
+        options: ["Таңертең", "Күндіз", "Кешке", "Демалыс күндері", "Кез келген уақыт"],
       },
       {
         key: "contacts",
@@ -221,19 +246,16 @@ const chatTranslations = {
         type: "comment",
       },
     ],
-
     fields: {
       name: "Атыңыз",
       phone: "Телефон",
       comment: "Пікір",
     },
-
     placeholders: {
       name: "Мысалы: Дәурен",
       phone: "+7 ...",
       comment: "Мысалы: тіс суыққа сезімтал, кешке жазылғым келеді",
     },
-
     recommendation: {
       urgentTitle: "Ұсыныс",
       urgentText:
@@ -242,7 +264,6 @@ const chatTranslations = {
       normalText:
         "Жағдай жоспарлы кеңеске сай келеді. Әкімші мәліметтерді нақтылап, ыңғайлы уақыт ұсынады.",
     },
-
     summary: {
       title: "Өтінім дайындалды",
       text: "Енді өтінімді клиниканың WhatsApp нөміріне жіберіңіз. Хабарлама автоматты түрде дайындалды — тек жіберу батырмасын басу керек.",
@@ -252,7 +273,14 @@ const chatTranslations = {
       home: "Басты бет",
       saved: "Өтінім сақталды",
     },
-
+    crmStatus: {
+      sending: "Өтінім CRM жүйесіне жіберіліп жатыр...",
+      sent: "Өтінім Google Sheets CRM жүйесіне жіберілді.",
+      error:
+        "Өтінімді CRM жүйесіне жіберу мүмкін болмады. Төмендегі WhatsApp батырмасы жұмыс істейді.",
+      cooldown:
+        "Өтінім жақында жіберілген. Шұғыл байланысу керек болса, төмендегі WhatsApp батырмасын пайдаланыңыз.",
+    },
     requestLabels: {
       concern: "Себеп",
       urgency: "Шұғылдық",
@@ -264,51 +292,6 @@ const chatTranslations = {
     },
   },
 };
-
-async function sendRequestToGoogleSheets(request) {
-  if (!GOOGLE_SCRIPT_URL) return;
-
-  await fetch(GOOGLE_SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8",
-    },
-    body: JSON.stringify(request),
-  });
-}
-
-function buildClinicWhatsAppText(form, recommendation, language) {
-  if (language === "kz") {
-    return `Сәлеметсіз бе! ALADENT клиникасына жазылғым келеді.
-
-Аты: ${form.name || "-"}
-Телефон: ${form.phone || "-"}
-
-Себеп: ${form.concern || "-"}
-Шұғылдық: ${form.urgency || "-"}
-Ауырсыну: ${form.pain || "-"}
-Ыңғайлы уақыт: ${form.preferredTime || "-"}
-Пікір: ${form.comment || "-"}
-
-AI ұсынысы:
-${recommendation.text || "-"}`;
-  }
-
-  return `Здравствуйте! Хочу записаться в ALADENT.
-
-Имя: ${form.name || "-"}
-Телефон: ${form.phone || "-"}
-
-Повод: ${form.concern || "-"}
-Срочность: ${form.urgency || "-"}
-Боль: ${form.pain || "-"}
-Удобное время: ${form.preferredTime || "-"}
-Комментарий: ${form.comment || "-"}
-
-AI-рекомендация:
-${recommendation.text || "-"}`;
-}
 
 export default function AiChatPage() {
   const [language, setLanguage] = useState("ru");
@@ -324,6 +307,7 @@ export default function AiChatPage() {
     name: "",
     phone: "",
     comment: "",
+    website: "",
   });
 
   useEffect(() => {
@@ -360,9 +344,10 @@ export default function AiChatPage() {
         text: t.recommendation.normalText,
       };
 
-      const clinicWhatsAppUrl = `https://wa.me/${CLINIC_WHATSAPP_PHONE}?text=${encodeURIComponent(
-        buildClinicWhatsAppText(form, recommendation, language)
-      )}`;
+  const clinicWhatsAppUrl = `https://wa.me/${CLINIC_WHATSAPP_PHONE}?text=${encodeURIComponent(
+    buildClinicWhatsAppText(form, recommendation, language)
+  )}`;
+
   const canGoNext = useMemo(() => {
     if (currentStep.type === "options") {
       return Boolean(form[currentStep.key]);
@@ -383,16 +368,36 @@ export default function AiChatPage() {
   };
 
   const saveRequest = async () => {
-  const previousRequests = JSON.parse(
-    localStorage.getItem("aladent_requests") || "[]"
-  );
+    if (sheetStatus === "sending") return;
 
-  const request = {
+    if (form.website) {
+      setIsSaved(true);
+      setSheetStatus("sent");
+      return;
+    }
+
+    const now = Date.now();
+    const lastSentAt = Number(
+      localStorage.getItem("aladent_last_request_sent_at") || "0"
+    );
+
+    if (lastSentAt && now - lastSentAt < REQUEST_COOLDOWN_MS) {
+      setIsSaved(true);
+      setSheetStatus("cooldown");
+      return;
+    }
+
+    const previousRequests = JSON.parse(
+      localStorage.getItem("aladent_requests") || "[]"
+    );
+
+    const request = {
       id:
         typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID()
           : String(Date.now()),
       createdAt: new Date().toLocaleString(),
+      submittedAt: new Date().toISOString(),
       status: "new",
       language,
       concern: form.concern,
@@ -404,8 +409,8 @@ export default function AiChatPage() {
       comment: form.comment,
       recommendation: recommendation.text,
       source: "aladent-site",
-      userAgent:
-        typeof navigator !== "undefined" ? navigator.userAgent : "",
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+      website: form.website,
     };
 
     localStorage.setItem(
@@ -418,6 +423,7 @@ export default function AiChatPage() {
 
     try {
       await sendRequestToGoogleSheets(request);
+      localStorage.setItem("aladent_last_request_sent_at", String(now));
       setSheetStatus("sent");
     } catch (error) {
       console.error(error);
@@ -446,6 +452,7 @@ export default function AiChatPage() {
     setStep(0);
     setIsSaved(false);
     setSheetStatus("idle");
+
     setForm({
       concern: "",
       urgency: "",
@@ -454,6 +461,7 @@ export default function AiChatPage() {
       name: "",
       phone: "",
       comment: "",
+      website: "",
     });
   };
 
@@ -515,25 +523,25 @@ export default function AiChatPage() {
               {t.summary.title}
             </h1>
 
-            <p className="mb-10 max-w-2xl leading-8 text-neutral-600">
+            <p className="mb-8 max-w-2xl leading-8 text-neutral-600">
               {t.summary.text}
             </p>
 
             <div className="mb-8 rounded-2xl bg-[#F7F6F3] p-5 text-sm">
               {sheetStatus === "sending" && (
-                <p className="text-neutral-600">Заявка отправляется в CRM...</p>
+                <p className="text-neutral-600">{t.crmStatus.sending}</p>
               )}
 
               {sheetStatus === "sent" && (
-                <p className="text-green-700">
-                  Заявка отправлена в Google Sheets CRM.
-                </p>
+                <p className="text-green-700">{t.crmStatus.sent}</p>
               )}
 
               {sheetStatus === "error" && (
-                <p className="text-red-600">
-                  Не получилось отправить заявку в CRM. WhatsApp-кнопка ниже всё равно работает.
-                </p>
+                <p className="text-red-600">{t.crmStatus.error}</p>
+              )}
+
+              {sheetStatus === "cooldown" && (
+                <p className="text-amber-700">{t.crmStatus.cooldown}</p>
               )}
             </div>
 
@@ -603,6 +611,16 @@ export default function AiChatPage() {
   return (
     <main className="min-h-screen bg-[#F7F6F3] px-5 py-8 text-[#2D2D2D] sm:px-8">
       <div className="mx-auto max-w-5xl">
+        <input
+          type="text"
+          name="website"
+          value={form.website}
+          onChange={(event) => updateField("website", event.target.value)}
+          tabIndex="-1"
+          autoComplete="off"
+          className="hidden"
+        />
+
         <header className="mb-10 flex flex-wrap items-center justify-between gap-4">
           <a href={`${BASE_PATH}/`}>
             <img
@@ -743,9 +761,7 @@ export default function AiChatPage() {
                 disabled={!canGoNext}
                 className="rounded-full bg-[#151515] px-7 py-4 text-white disabled:cursor-not-allowed disabled:opacity-30"
               >
-                {step === t.steps.length - 1
-                  ? t.common.finish
-                  : t.common.next}
+                {step === t.steps.length - 1 ? t.common.finish : t.common.next}
               </button>
             </div>
           </div>
