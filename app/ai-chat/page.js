@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BASE_PATH } from "../../lib/paths";
 const CLINIC_WHATSAPP_PHONE = "77051462776";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7AnI0c1RPJtVww_4rWC4i0WBsQAsf0OmwnNkpPKne7A17ATItt_wkKfjlINd9CYWKMA/exec";
 
 const chatTranslations = {
   ru: {
@@ -264,6 +265,19 @@ const chatTranslations = {
   },
 };
 
+async function sendRequestToGoogleSheets(request) {
+  if (!GOOGLE_SCRIPT_URL) return;
+
+  await fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8",
+    },
+    body: JSON.stringify(request),
+  });
+}
+
 function buildClinicWhatsAppText(form, recommendation, language) {
   if (language === "kz") {
     return `Сәлеметсіз бе! ALADENT клиникасына жазылғым келеді.
@@ -300,6 +314,7 @@ export default function AiChatPage() {
   const [language, setLanguage] = useState("ru");
   const [step, setStep] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
+  const [sheetStatus, setSheetStatus] = useState("idle");
 
   const [form, setForm] = useState({
     concern: "",
@@ -367,12 +382,12 @@ export default function AiChatPage() {
     }));
   };
 
-  const saveRequest = () => {
-    const previousRequests = JSON.parse(
-      localStorage.getItem("aladent_requests") || "[]"
-    );
+  const saveRequest = async () => {
+  const previousRequests = JSON.parse(
+    localStorage.getItem("aladent_requests") || "[]"
+  );
 
-    const request = {
+  const request = {
       id:
         typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID()
@@ -388,6 +403,9 @@ export default function AiChatPage() {
       phone: form.phone,
       comment: form.comment,
       recommendation: recommendation.text,
+      source: "aladent-site",
+      userAgent:
+        typeof navigator !== "undefined" ? navigator.userAgent : "",
     };
 
     localStorage.setItem(
@@ -396,6 +414,15 @@ export default function AiChatPage() {
     );
 
     setIsSaved(true);
+    setSheetStatus("sending");
+
+    try {
+      await sendRequestToGoogleSheets(request);
+      setSheetStatus("sent");
+    } catch (error) {
+      console.error(error);
+      setSheetStatus("error");
+    }
   };
 
   const nextStep = () => {
@@ -418,6 +445,7 @@ export default function AiChatPage() {
   const resetForm = () => {
     setStep(0);
     setIsSaved(false);
+    setSheetStatus("idle");
     setForm({
       concern: "",
       urgency: "",
@@ -490,6 +518,24 @@ export default function AiChatPage() {
             <p className="mb-10 max-w-2xl leading-8 text-neutral-600">
               {t.summary.text}
             </p>
+
+            <div className="mb-8 rounded-2xl bg-[#F7F6F3] p-5 text-sm">
+              {sheetStatus === "sending" && (
+                <p className="text-neutral-600">Заявка отправляется в CRM...</p>
+              )}
+
+              {sheetStatus === "sent" && (
+                <p className="text-green-700">
+                  Заявка отправлена в Google Sheets CRM.
+                </p>
+              )}
+
+              {sheetStatus === "error" && (
+                <p className="text-red-600">
+                  Не получилось отправить заявку в CRM. WhatsApp-кнопка ниже всё равно работает.
+                </p>
+              )}
+            </div>
 
             <div className="mb-10 rounded-[2rem] bg-[#F7F6F3] p-6">
               <h2 className="mb-4 text-xl font-medium">{recommendation.title}</h2>
