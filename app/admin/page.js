@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 const statuses = [
   "Новая",
   "Связаться",
@@ -77,20 +79,20 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-[#F7F6F3] px-5 py-8 text-[#2D2D2D] sm:px-8">
       <header className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        <a href="/">
-          <img src="/logo.png" alt="ALADENT" className="h-14 w-auto sm:h-16" />
+        <a href={`${BASE_PATH}/`}>
+          <img src={`${BASE_PATH}/logo.png`} alt="ALADENT" className="h-14 w-auto sm:h-16" />
         </a>
 
         <div className="flex gap-2">
           <a
-            href="/ai-chat"
+            href={`${BASE_PATH}/ai-chat/`}
             className="rounded-full border border-neutral-300 px-5 py-3 text-sm"
           >
             Новая заявка
           </a>
 
           <a
-            href="/"
+            href={`${BASE_PATH}/`}
             className="rounded-full border border-neutral-300 px-5 py-3 text-sm"
           >
             На главную
@@ -149,7 +151,7 @@ export default function AdminPage() {
             </p>
 
             <a
-              href="/ai-chat"
+              href={`${BASE_PATH}/ai-chat/`}
               className="inline-flex rounded-full bg-[#151515] px-8 py-4 text-white"
             >
               Создать заявку

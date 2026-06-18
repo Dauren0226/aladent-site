@@ -2,10 +2,12 @@
 
 import { useEffect } from "react";
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 export default function ConsultationRedirect() {
   useEffect(() => {
     const timer = setTimeout(() => {
-      window.location.href = "/ai-chat";
+      window.location.href = `${BASE_PATH}/ai-chat/`;
     }, 1200);
 
     return () => clearTimeout(timer);
@@ -15,7 +17,7 @@ export default function ConsultationRedirect() {
     <main className="flex min-h-screen items-center justify-center bg-[#F7F6F3] px-5 text-[#2D2D2D]">
       <div className="max-w-xl text-center">
         <img
-          src="/logo.png"
+          src={`${BASE_PATH}/logo.png`}
           alt="ALADENT"
           className="mx-auto mb-8 h-20 w-auto"
         />

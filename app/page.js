@@ -1,4 +1,8 @@
+
 export default function Home() {
+
+  const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
   const services = [
     ["Профилактика", "Профессиональная чистка, осмотр и рекомендации по уходу."],
     ["Лечение кариеса", "Аккуратное восстановление зубов с понятным планом лечения."],
@@ -22,7 +26,7 @@ export default function Home() {
       <header className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5 sm:px-8 sm:py-8">
         <a href="#" className="shrink-0">
           <img
-            src="/logo.png"
+            src={`${BASE_PATH}/logo.png`}
             alt="ALADENT"
             className="h-14 w-auto sm:h-20 md:h-24"
           />
@@ -279,7 +283,7 @@ export default function Home() {
       <footer className="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-12">
         <div className="flex flex-col justify-between gap-6 border-t border-neutral-200 pt-8 md:flex-row md:items-center">
           <div>
-            <img src="/logo.png" alt="ALADENT" className="mb-4 h-14 w-auto sm:h-16" />
+            <img src={`${BASE_PATH}/logo.png`} alt="ALADENT" className="mb-4 h-14 w-auto sm:h-16" />
             <p className="text-neutral-500">
               Smiles majestic as the Almaty peaks
             </p>

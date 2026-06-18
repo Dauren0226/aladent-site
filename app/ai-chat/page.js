@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 export default function AiChatPage() {
   const [step, setStep] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -133,8 +135,8 @@ ${recommendation}
   return (
     <main className="min-h-screen bg-[#F7F6F3] px-5 py-8 text-[#2D2D2D] sm:px-8">
       <div className="mx-auto flex max-w-4xl items-center justify-between">
-        <a href="/">
-          <img src="/logo.png" alt="ALADENT" className="h-14 w-auto sm:h-16" />
+        <a href={`${BASE_PATH}/`}>
+          <img src={`${BASE_PATH}/logo.png`} alt="ALADENT" className="h-14 w-auto sm:h-16" />
         </a>
 
         <div className="flex gap-2">
@@ -146,7 +148,7 @@ ${recommendation}
           </a>
 
           <a
-            href="/"
+            href={`${BASE_PATH}/`}
             className="rounded-full border border-neutral-300 px-5 py-3 text-sm"
           >
             На главную
@@ -350,7 +352,7 @@ ${recommendation}
               </button>
 
               <a
-                href="/"
+                href={`${BASE_PATH}/`}
                 className="rounded-full border border-neutral-300 px-8 py-4 text-center"
               >
                 На главную
